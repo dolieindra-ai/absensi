@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Absensi Regu 3 Siaga - Satpol PP Kab. Bangka</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
 body{background:#dde3ec;color:#222;min-height:100vh}
@@ -13,9 +12,9 @@ body{background:#dde3ec;color:#222;min-height:100vh}
 .header-text h1{font-size:14px;font-weight:800;line-height:1.4;letter-spacing:.3px;text-transform:uppercase}
 .header-text p{font-size:11px;opacity:.8;margin-top:2px}
 nav{background:#162d4a;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
-nav::-webkit-scrollbar{height:3px}
 nav button{background:none;border:none;border-bottom:3px solid transparent;color:#a8bed8;padding:11px 15px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all .2s}
 nav button.active,nav button:hover{color:#f0c030;border-bottom-color:#f0c030;background:rgba(255,255,255,.05)}
+
 .main{max-width:860px;margin:0 auto;padding:14px 12px}
 .sec{display:none}.sec.active{display:block}
 .card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1);padding:16px;margin-bottom:14px}
@@ -25,7 +24,7 @@ input[type=text],input[type=number],input[type=date],select{width:100%;padding:8
 input:focus,select:focus{outline:none;border-color:#1e3a5f;background:#fff}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.g2{grid-template-columns:1fr}}
-.btn{display:inline-block;padding:9px 18px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:700;margin:2px 4px 4px 0;transition:all .2s;text-align:center}
+.btn{display:inline-block;padding:9px 18px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:700;margin:2px 4px 4px 0;transition:all .2s}
 .b-blue{background:#1e3a5f;color:#fff}.b-blue:hover{background:#162d4a}
 .b-red{background:#c0392b;color:#fff}.b-red:hover{background:#a93226}
 .b-green{background:#1e8449;color:#fff}.b-green:hover{background:#196f3d}
@@ -49,6 +48,9 @@ tbody tr:hover td{background:#eaf0fb}
 .hari-ini{background:#e8f4fd;border-left:4px solid #1e3a5f;padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:12px}
 .hari-ini p:first-child{font-size:14px;font-weight:700;color:#1e3a5f}
 .hari-ini p:last-child{font-size:11px;color:#777;margin-top:2px}
+.loading{text-align:center;padding:20px;color:#1e3a5f;font-weight:600}
+.status-bar{background:#d4edda;color:#155724;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:10px;display:none}
+.status-bar.error{background:#f8d7da;color:#721c24}
 </style>
 </head>
 <body>
@@ -61,12 +63,26 @@ tbody tr:hover td{background:#eaf0fb}
 </div>
 
 <nav>
-  <button class="active" onclick="showTab('dashboard',this)">🏠 Dashboard</button>
-  <button onclick="showTab('absensi',this)">✅ Input Absensi</button>
-  <button onclick="showTab('pegawai',this)">👥 Data Pegawai</button>
-  <button onclick="showTab('rekap',this)">📊 Rekap</button>
-  <button onclick="showTab('laporan',this)">🖨️ Laporan</button>
+  <button class="active" id="btn-dashboard" onclick="handleTab('dashboard')">🏠 Dashboard</button>
+  <button id="btn-absensi" onclick="handleTab('absensi')">✅ Input Absensi</button>
+  <button id="btn-pegawai" onclick="handleTab('pegawai')">👥 Data Pegawai</button>
+  <button id="btn-rekap" onclick="handleTab('rekap')">📊 Rekap</button>
+  <button id="btn-laporan" onclick="handleTab('laporan')">🖨️ Laporan</button>
 </nav>
+<script>
+function handleTab(id){
+  document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  document.getElementById('btn-'+id).classList.add('active');
+}
+function handleHapusPgw(id){if(window._hapusPgw)window._hapusPgw(id);}
+function handleSimpanAbsensi(){if(window._simpanAbsensi)window._simpanAbsensi();}
+function handleTambahPgw(){if(window._tambahPgw)window._tambahPgw();}
+function handleTampilRekap(){if(window._tampilRekap)window._tampilRekap();}
+function handleCetakPDF(){if(window._cetakPDF)window._cetakPDF();}
+function handleUnduhXLS(){if(window._unduhXLS)window._unduhXLS();}
+</script>
 
 <div class="main">
 
@@ -78,12 +94,13 @@ tbody tr:hover td{background:#eaf0fb}
         <p id="tgl-hari">-</p>
         <p>Regu 3 Siaga — Satpol PP Kabupaten Bangka</p>
       </div>
+      <div id="koneksi-status" style="font-size:12px;color:#1e8449;font-weight:600">🔄 Menghubungkan ke database...</div>
     </div>
     <div class="stat-wrap">
-      <div class="stat"><div class="n" id="d-total">0</div><div class="l">Total Pegawai</div></div>
-      <div class="stat"><div class="n" id="d-hadir">0</div><div class="l">Hadir Hari Ini</div></div>
-      <div class="stat"><div class="n" id="d-apelp">0</div><div class="l">Apel Pagi ✓</div></div>
-      <div class="stat"><div class="n" id="d-apelm">0</div><div class="l">Apel Malam ✓</div></div>
+      <div class="stat"><div class="n" id="d-total">-</div><div class="l">Total Pegawai</div></div>
+      <div class="stat"><div class="n" id="d-hadir">-</div><div class="l">Hadir Hari Ini</div></div>
+      <div class="stat"><div class="n" id="d-apelp">-</div><div class="l">Apel Pagi ✓</div></div>
+      <div class="stat"><div class="n" id="d-apelm">-</div><div class="l">Apel Malam ✓</div></div>
     </div>
   </div>
 
@@ -91,6 +108,7 @@ tbody tr:hover td{background:#eaf0fb}
   <div class="sec" id="absensi">
     <div class="card">
       <h2>✅ Input Absensi Harian</h2>
+      <div id="abs-status" class="status-bar"></div>
       <div class="g2">
         <div><label>Tanggal</label><input type="date" id="abs-tgl"></div>
         <div><label>Pegawai</label><select id="abs-pgw"><option value="">-- Pilih Pegawai --</option></select></div>
@@ -105,7 +123,7 @@ tbody tr:hover td{background:#eaf0fb}
       </div>
       <label>Keterangan</label>
       <input type="text" id="abs-ket" placeholder="Opsional">
-      <button class="btn b-blue" onclick="simpanAbsensi()">💾 Simpan Absensi</button>
+      <button class="btn b-blue" onclick="handleSimpanAbsensi()">💾 Simpan Absensi</button>
     </div>
     <div class="card">
       <h2>📋 Daftar Absensi</h2>
@@ -117,6 +135,7 @@ tbody tr:hover td{background:#eaf0fb}
   <div class="sec" id="pegawai">
     <div class="card">
       <h2>➕ Tambah Pegawai</h2>
+      <div id="pgw-status" class="status-bar"></div>
       <div class="g2">
         <div><label>NIP</label><input type="text" id="p-nip" placeholder="NIP Pegawai"></div>
         <div><label>Nama Lengkap</label><input type="text" id="p-nama" placeholder="Nama Lengkap"></div>
@@ -125,11 +144,11 @@ tbody tr:hover td{background:#eaf0fb}
         <div><label>Jabatan / Pangkat</label><input type="text" id="p-jab" placeholder="Jabatan"></div>
         <div><label>No. HP</label><input type="text" id="p-hp" placeholder="Nomor HP"></div>
       </div>
-      <button class="btn b-blue" onclick="tambahPgw()">➕ Tambah</button>
+      <button class="btn b-blue" onclick="handleTambahPgw()">➕ Tambah</button>
     </div>
     <div class="card">
       <h2>👥 Daftar Pegawai Regu 3</h2>
-      <div id="wrap-pgw"><p class="info">Belum ada data pegawai.</p></div>
+      <div id="wrap-pgw"><p class="loading">🔄 Memuat data...</p></div>
     </div>
   </div>
 
@@ -148,7 +167,7 @@ tbody tr:hover td{background:#eaf0fb}
         </div>
         <div><label>Tahun</label><input type="number" id="r-thn" value="2026"></div>
       </div>
-      <button class="btn b-blue" onclick="tampilRekap()">🔍 Tampilkan</button>
+      <button class="btn b-blue" onclick="handleTampilRekap()">🔍 Tampilkan</button>
     </div>
     <div class="card" id="wrap-rekap" style="display:none">
       <h2 id="judul-rekap"></h2>
@@ -171,8 +190,8 @@ tbody tr:hover td{background:#eaf0fb}
         </div>
         <div><label>Tahun</label><input type="number" id="l-thn" value="2026"></div>
       </div>
-      <button class="btn b-red" onclick="cetakPDF()">📄 Cetak / PDF</button>
-      <button class="btn b-green" onclick="unduhXLS()">📊 Unduh Excel</button>
+      <button class="btn b-red" onclick="handleCetakPDF()">📄 Cetak / PDF</button>
+      <button class="btn b-green" onclick="handleUnduhXLS()">📊 Unduh Excel</button>
     </div>
     <div class="card">
       <h2>👁️ Pratinjau</h2>
@@ -182,94 +201,142 @@ tbody tr:hover td{background:#eaf0fb}
 
 </div>
 
-<script>
-var pgw=JSON.parse(localStorage.getItem('s3pgw')||'[]');
-var abs=JSON.parse(localStorage.getItem('s3abs')||'[]');
-var BLN=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-function sv(){localStorage.setItem('s3pgw',JSON.stringify(pgw));localStorage.setItem('s3abs',JSON.stringify(abs));}
+const firebaseConfig = {
+  apiKey: "AIzaSyCJEgNOUf80CzHQ0xt8yqFT6Du7rwj2ZZs",
+  authDomain: "absensi-regu3.firebaseapp.com",
+  databaseURL: "https://absensi-regu3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "absensi-regu3",
+  storageBucket: "absensi-regu3.firebasestorage.app",
+  messagingSenderId: "108284021531",
+  appId: "1:108284021531:web:03a270152b97e929d021be"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+var BLN=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+var pgwData={};
+var absData={};
+
 function fd(d){return d.toISOString().split('T')[0];}
 function bdg(v){var m={Hadir:'bh',Izin:'bi',Sakit:'bs',Alpha:'ba'};return '<span class="badge '+(m[v]||'')+'">'+v+'</span>';}
+function showStatus(id,msg,isError){
+  var el=document.getElementById(id);
+  el.textContent=msg;
+  el.className='status-bar'+(isError?' error':'');
+  el.style.display='block';
+  setTimeout(function(){el.style.display='none';},3000);
+}
 
-window.onload=function(){
+// Init
+window.addEventListener('load', function(){
   var t=new Date();
   document.getElementById('abs-tgl').value=fd(t);
   document.getElementById('tgl-hari').textContent=t.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('r-bln').value=t.getMonth()+1;
   document.getElementById('l-bln').value=t.getMonth()+1;
-  refreshDrop();dashboard();renderAbs();renderPgw();
-};
 
-function showTab(id,btn){
+  // Listen Pegawai realtime
+  onValue(ref(db,'pegawai'), function(snap){
+    pgwData = snap.val() || {};
+    renderPgw();
+    refreshDrop();
+    dashboard();
+    document.getElementById('koneksi-status').textContent='✅ Terhubung ke database';
+    document.getElementById('koneksi-status').style.color='#1e8449';
+  }, function(err){
+    document.getElementById('koneksi-status').textContent='❌ Gagal terhubung: '+err.message;
+    document.getElementById('koneksi-status').style.color='#c0392b';
+  });
+
+  // Listen Absensi realtime
+  onValue(ref(db,'absensi'), function(snap){
+    absData = snap.val() || {};
+    renderAbs();
+    dashboard();
+  });
+});
+
+window.showTab = function(id,btn){
   document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('active');});
   document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
-  if(id==='dashboard')dashboard();
-  if(id==='absensi')renderAbs();
-  if(id==='pegawai')renderPgw();
-}
+};
 
 function dashboard(){
   var td=fd(new Date());
-  document.getElementById('d-total').textContent=pgw.length;
-  document.getElementById('d-hadir').textContent=abs.filter(function(a){return a.tgl===td&&(a.p==='Hadir'||a.m==='Hadir');}).length;
-  document.getElementById('d-apelp').textContent=abs.filter(function(a){return a.tgl===td&&a.p==='Hadir';}).length;
-  document.getElementById('d-apelm').textContent=abs.filter(function(a){return a.tgl===td&&a.m==='Hadir';}).length;
+  var pgwList=Object.values(pgwData);
+  document.getElementById('d-total').textContent=pgwList.length;
+  var absHari=Object.values(absData).filter(function(a){return a.tgl===td;});
+  document.getElementById('d-hadir').textContent=absHari.filter(function(a){return a.p==='Hadir'||a.m==='Hadir';}).length;
+  document.getElementById('d-apelp').textContent=absHari.filter(function(a){return a.p==='Hadir';}).length;
+  document.getElementById('d-apelm').textContent=absHari.filter(function(a){return a.m==='Hadir';}).length;
 }
 
 function refreshDrop(){
   var s=document.getElementById('abs-pgw'),cv=s.value;
   s.innerHTML='<option value="">-- Pilih Pegawai --</option>';
-  pgw.forEach(function(p){s.innerHTML+='<option value="'+p.id+'"'+(cv==p.id?' selected':'')+'>'+p.nama+'</option>';});
+  Object.entries(pgwData).forEach(function(e){
+    s.innerHTML+='<option value="'+e[0]+'"'+(cv===e[0]?' selected':'')+'>'+e[1].nama+'</option>';
+  });
 }
 
-function tambahPgw(){
+window._tambahPgw = function(){
   var nip=document.getElementById('p-nip').value.trim();
   var nama=document.getElementById('p-nama').value.trim();
   var jab=document.getElementById('p-jab').value.trim();
   var hp=document.getElementById('p-hp').value.trim();
   if(!nama){alert('Nama wajib diisi!');return;}
-  pgw.push({id:Date.now(),nip:nip,nama:nama,jab:jab,hp:hp});
-  sv();
-  ['p-nip','p-nama','p-jab','p-hp'].forEach(function(i){document.getElementById(i).value='';});
-  refreshDrop();renderPgw();dashboard();
-}
+  var newRef=push(ref(db,'pegawai'));
+  set(newRef,{nip:nip,nama:nama,jab:jab,hp:hp}).then(function(){
+    ['p-nip','p-nama','p-jab','p-hp'].forEach(function(i){document.getElementById(i).value='';});
+    showStatus('pgw-status','✅ Pegawai berhasil ditambahkan!',false);
+  }).catch(function(e){showStatus('pgw-status','❌ Gagal: '+e.message,true);});
+};
 
-function hapusPgw(id){
+window.hapusPgw = function(id){
   if(!confirm('Hapus pegawai ini?'))return;
-  pgw=pgw.filter(function(p){return p.id!==id;});
-  sv();refreshDrop();renderPgw();dashboard();
-}
+  remove(ref(db,'pegawai/'+id)).then(function(){
+    showStatus('pgw-status','✅ Pegawai berhasil dihapus!',false);
+  }).catch(function(e){showStatus('pgw-status','❌ Gagal: '+e.message,true);});
+};
 
 function renderPgw(){
   var w=document.getElementById('wrap-pgw');
-  if(!pgw.length){w.innerHTML='<p class="info">Belum ada data pegawai.</p>';return;}
+  var list=Object.entries(pgwData);
+  if(!list.length){w.innerHTML='<p class="info">Belum ada data pegawai.</p>';return;}
   var h='<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>NIP</th><th>Nama</th><th>Jabatan</th><th>No. HP</th><th>Aksi</th></tr></thead><tbody>';
-  pgw.forEach(function(p,i){
-    h+='<tr><td>'+(i+1)+'</td><td>'+(p.nip||'-')+'</td><td>'+p.nama+'</td><td>'+(p.jab||'-')+'</td><td>'+(p.hp||'-')+'</td><td><button class="b-del" onclick="hapusPgw('+p.id+')">Hapus</button></td></tr>';
+  list.forEach(function(e,i){
+    var p=e[1];
+    h+='<tr><td>'+(i+1)+'</td><td>'+(p.nip||'-')+'</td><td>'+p.nama+'</td><td>'+(p.jab||'-')+'</td><td>'+(p.hp||'-')+'</td><td><button class="b-del" onclick="handleHapusPgw(\''+e[0]+'\')">Hapus</button></td></tr>';
   });
   w.innerHTML=h+'</tbody></table></div>';
 }
 
-function simpanAbsensi(){
+window._simpanAbsensi = function(){
   var tgl=document.getElementById('abs-tgl').value;
   var pid=document.getElementById('abs-pgw').value;
   var ap=document.getElementById('abs-p').value;
   var am=document.getElementById('abs-m').value;
   var ket=document.getElementById('abs-ket').value;
   if(!tgl||!pid){alert('Tanggal dan pegawai wajib diisi!');return;}
-  var pp=pgw.find(function(p){return p.id==pid;});
-  var idx=abs.findIndex(function(a){return a.tgl===tgl&&a.pid==pid;});
-  var rec={pid:pid,nama:pp.nama,tgl:tgl,p:ap,m:am,ket:ket};
-  if(idx>=0)abs[idx]=rec;else abs.push(rec);
-  sv();renderAbs();dashboard();
-  alert('Absensi berhasil disimpan!');
-}
+  var nama=pgwData[pid]?pgwData[pid].nama:'';
+  var key=tgl+'_'+pid;
+  set(ref(db,'absensi/'+key),{pid:pid,nama:nama,tgl:tgl,p:ap,m:am,ket:ket}).then(function(){
+    showStatus('abs-status','✅ Absensi berhasil disimpan!',false);
+    document.getElementById('abs-ket').value='';
+  }).catch(function(e){showStatus('abs-status','❌ Gagal: '+e.message,true);});
+};
 
 function renderAbs(){
   var tgl=document.getElementById('abs-tgl').value||fd(new Date());
-  var data=abs.filter(function(a){return a.tgl===tgl;});
+  var data=Object.values(absData).filter(function(a){return a.tgl===tgl;});
   var w=document.getElementById('wrap-abs');
   if(!data.length){w.innerHTML='<p class="info">Belum ada absensi untuk tanggal ini.</p>';return;}
   var h='<div style="overflow-x:auto"><table><thead><tr><th>Nama</th><th>Apel Pagi</th><th>Apel Malam</th><th>Keterangan</th></tr></thead><tbody>';
@@ -279,10 +346,16 @@ function renderAbs(){
   w.innerHTML=h+'</tbody></table></div>';
 }
 
+// Update tampilan absensi saat tanggal berubah
+document.getElementById('abs-tgl').addEventListener('change', renderAbs);
+
 function getRekap(bln,thn){
-  var data=abs.filter(function(a){var d=new Date(a.tgl);return d.getMonth()+1===bln&&d.getFullYear()===thn;});
-  return pgw.map(function(p,i){
-    var pd=data.filter(function(a){return a.pid==p.id;});
+  var absList=Object.values(absData).filter(function(a){
+    var d=new Date(a.tgl);return d.getMonth()+1===bln&&d.getFullYear()===thn;
+  });
+  return Object.entries(pgwData).map(function(e,i){
+    var pid=e[0],p=e[1];
+    var pd=absList.filter(function(a){return a.pid===pid;});
     return {
       no:i+1,nip:p.nip||'-',nama:p.nama,jab:p.jab||'-',
       hadir:pd.filter(function(a){return a.p==='Hadir'||a.m==='Hadir';}).length,
@@ -295,50 +368,40 @@ function getRekap(bln,thn){
   });
 }
 
-function tampilRekap(){
+window._tampilRekap = function(){
   var bln=parseInt(document.getElementById('r-bln').value);
   var thn=parseInt(document.getElementById('r-thn').value);
   var rows=getRekap(bln,thn);
   document.getElementById('wrap-rekap').style.display='block';
   document.getElementById('judul-rekap').textContent='Rekap — '+BLN[bln]+' '+thn;
-  if(!pgw.length){document.getElementById('isi-rekap').innerHTML='<p class="info">Belum ada data pegawai.</p>';return;}
+  if(!rows.length){document.getElementById('isi-rekap').innerHTML='<p class="info">Belum ada data.</p>';return;}
   var h='<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>Nama</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpha</th><th>Apel Pagi</th><th>Apel Malam</th></tr></thead><tbody>';
   rows.forEach(function(r){
     h+='<tr><td>'+r.no+'</td><td>'+r.nama+'</td><td>'+r.hadir+'</td><td>'+r.izin+'</td><td>'+r.sakit+'</td><td>'+r.alpha+'</td><td>'+r.apelp+'</td><td>'+r.apelm+'</td></tr>';
   });
   document.getElementById('isi-rekap').innerHTML=h+'</tbody></table></div>';
-}
+};
 
-function cetakPDF(){
+window._cetakPDF = function(){
   var bln=parseInt(document.getElementById('l-bln').value);
   var thn=parseInt(document.getElementById('l-thn').value);
-  if(!pgw.length){alert('Belum ada data pegawai.');return;}
   var rows=getRekap(bln,thn);
+  if(!rows.length){alert('Belum ada data.');return;}
   var tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   var tr='';
   rows.forEach(function(r){tr+='<tr><td>'+r.no+'</td><td>'+r.nip+'</td><td>'+r.nama+'</td><td>'+r.jab+'</td><td>'+r.hadir+'</td><td>'+r.izin+'</td><td>'+r.sakit+'</td><td>'+r.alpha+'</td><td>'+r.apelp+'</td><td>'+r.apelm+'</td></tr>';});
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan '+BLN[bln]+' '+thn+'</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px}h2,h3{text-align:center;color:#1e3a5f}table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#1e3a5f;color:#fff;padding:6px;font-size:11px;border:1px solid #ccc}td{padding:5px;border:1px solid #ccc;font-size:11px}tr:nth-child(even)td{background:#f5f7fc}.ttd{margin-top:40px;text-align:right;padding-right:60px}</style></head><body><h2>SATUAN POLISI PAMONG PRAJA KABUPATEN BANGKA</h2><h3>REKAPITULASI ABSENSI REGU 3 SIAGA<br>Bulan: '+BLN[bln]+' '+thn+'</h3><table><tr><th>No</th><th>NIP</th><th>Nama</th><th>Jabatan</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpha</th><th>Apel Pagi</th><th>Apel Malam</th></tr>'+tr+'</table><div class="ttd"><p>Sungailiat, '+tgl+'</p><p>Kepala Regu 3</p><br><br><br><p>( ................................ )</p></div><script>window.onload=function(){window.print();}<\/script></body></html>';
   var b=new Blob([html],{type:'text/html'});
-  var u=URL.createObjectURL(b);
-  window.open(u,'_blank');
-  setTimeout(function(){URL.revokeObjectURL(u);},5000);
-  // preview
-  var p=document.getElementById('preview-lap');
-  p.innerHTML='<p style="color:#1e8449;font-weight:700;margin-bottom:8px">✅ Pratinjau siap — jendela cetak telah dibuka.</p><p style="font-size:12px;color:#555">Bulan: <b>'+BLN[bln]+' '+thn+'</b> | Total pegawai: <b>'+rows.length+'</b></p>';
-}
+  window.open(URL.createObjectURL(b),'_blank');
+};
 
-function unduhXLS(){
+window._unduhXLS = function(){
   var bln=parseInt(document.getElementById('l-bln').value);
   var thn=parseInt(document.getElementById('l-thn').value);
-  if(!pgw.length){alert('Belum ada data pegawai.');return;}
   var rows=getRekap(bln,thn);
+  if(!rows.length){alert('Belum ada data.');return;}
   var tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  var ws=[
-    ['SATUAN POLISI PAMONG PRAJA KABUPATEN BANGKA'],
-    ['REKAPITULASI ABSENSI REGU 3 SIAGA — '+BLN[bln]+' '+thn],
-    [],
-    ['No','NIP','Nama','Jabatan','Hadir','Izin','Sakit','Alpha','Apel Pagi','Apel Malam']
-  ];
+  var ws=[['SATUAN POLISI PAMONG PRAJA KABUPATEN BANGKA'],['REKAPITULASI ABSENSI REGU 3 SIAGA — '+BLN[bln]+' '+thn],[],['No','NIP','Nama','Jabatan','Hadir','Izin','Sakit','Alpha','Apel Pagi','Apel Malam']];
   rows.forEach(function(r){ws.push([r.no,r.nip,r.nama,r.jab,r.hadir,r.izin,r.sakit,r.alpha,r.apelp,r.apelm]);});
   ws.push([]);ws.push(['','','','','','','','','Sungailiat, '+tgl]);
   ws.push(['','','','','','','','','Kepala Regu 3']);
@@ -349,8 +412,8 @@ function unduhXLS(){
   s['!cols']=[{wch:4},{wch:18},{wch:24},{wch:20},{wch:7},{wch:7},{wch:7},{wch:7},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb,s,'Absensi '+BLN[bln]+' '+thn);
   XLSX.writeFile(wb,'Absensi_Regu3_'+BLN[bln]+'_'+thn+'.xlsx');
-  document.getElementById('preview-lap').innerHTML='<p style="color:#1e8449;font-weight:700">✅ File Excel berhasil diunduh!</p>';
-}
+};
+
 </script>
 </body>
 </html>

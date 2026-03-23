@@ -82,8 +82,8 @@ tbody tr:nth-child(even) td{background:#f5f7fc}
     <div class="stat-wrap">
       <div class="stat"><div class="n" id="d-total">-</div><div class="l">Total Pegawai</div></div>
       <div class="stat"><div class="n" id="d-hadir">-</div><div class="l">Hadir Hari Ini</div></div>
-      <div class="stat"><div class="n" id="d-apelp">-</div><div class="l">Apel Pagi ✓</div></div>
-      <div class="stat"><div class="n" id="d-apelm">-</div><div class="l">Apel Malam ✓</div></div>
+      <div class="stat"><div class="n" id="d-sakit">-</div><div class="l">Sakit Hari Ini</div></div>
+      <div class="stat"><div class="n" id="d-izin">-</div><div class="l">Izin Hari Ini</div></div>
     </div>
   </div>
 
@@ -251,8 +251,8 @@ function updateDashboard(){
   document.getElementById('d-total').textContent=Object.keys(_pgwData).length;
   var ah=Object.values(_absData).filter(function(a){return a.tgl===td;});
   document.getElementById('d-hadir').textContent=ah.filter(function(a){return a.p==='Hadir'||a.m==='Hadir';}).length;
-  document.getElementById('d-apelp').textContent=ah.filter(function(a){return a.p==='Hadir';}).length;
-  document.getElementById('d-apelm').textContent=ah.filter(function(a){return a.m==='Hadir';}).length;
+  document.getElementById('d-sakit').textContent=ah.filter(function(a){return a.p==='Sakit'||a.m==='Sakit';}).length;
+  document.getElementById('d-izin').textContent=ah.filter(function(a){return a.p==='Izin'||a.m==='Izin';}).length;
 }
 
 function refreshDrop(){
@@ -409,4 +409,4 @@ function doUnduhXLS(){
 }
 </script>
 </body>
-              </html>
+</html>

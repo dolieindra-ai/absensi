@@ -201,23 +201,38 @@ var _absData=[];
 
 function apiGet(binId,cb){
   fetch(BASE_URL+binId+'/latest',{
-    headers:{'X-Master-Key':MASTER_KEY,'X-Access-Key':ACCESS_KEY}
-  }).then(function(r){return r.json();}).then(function(d){cb(null,d.record);}).catch(function(e){cb(e);});
+    method:'GET',
+    headers:{
+      'X-Master-Key':MASTER_KEY,
+      'X-Access-Key':ACCESS_KEY,
+      'X-Bin-Meta':false
+    }
+  }).then(function(r){
+    if(!r.ok){throw new Error('HTTP '+r.status);}
+    return r.json();
+  }).then(function(d){cb(null,d.record);}).catch(function(e){cb(e);});
 }
 
 function apiSet(binId,data,cb){
   fetch(BASE_URL+binId,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':MASTER_KEY,'X-Access-Key':ACCESS_KEY},
+    headers:{
+      'Content-Type':'application/json',
+      'X-Master-Key':MASTER_KEY,
+      'X-Access-Key':ACCESS_KEY
+    },
     body:JSON.stringify(data)
-  }).then(function(r){return r.json();}).then(function(d){if(cb)cb(null,d);}).catch(function(e){if(cb)cb(e);});
+  }).then(function(r){
+    if(!r.ok){throw new Error('HTTP '+r.status);}
+    return r.json();
+  }).then(function(d){if(cb)cb(null,d);}).catch(function(e){if(cb)cb(e);});
 }
 
 function loadData(){
   document.getElementById('koneksi-status').textContent='🔄 Memuat data...';
   apiGet(BIN_PGW,function(err,data){
     if(err){
-      document.getElementById('koneksi-status').textContent='❌ Gagal terhubung: '+err.message;
+      document.getElementById('koneksi-status').textContent='❌ Error: '+err.message;
       document.getElementById('koneksi-status').style.color='#c0392b';
       return;
     }

@@ -95,14 +95,20 @@ tbody tr:nth-child(even) td{background:#f5f7fc}
         <div><label>Tanggal</label><input type="date" id="abs-tgl" onchange="renderAbs()"></div>
         <div><label>Pegawai</label><select id="abs-pgw"><option value="">-- Pilih Pegawai --</option></select></div>
       </div>
-      <div class="g2">
-        <div><label>Apel Pagi</label>
-          <select id="abs-p"><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpha</option></select>
-        </div>
-        <div><label>Apel Malam</label>
-          <select id="abs-m"><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpha</option></select>
-        </div>
+      <div id="status-wrap">
+        <label>Status Kehadiran</label>
+        <select id="abs-status" onchange="onStatusChange()">
+          <option value="hadir">✅ Hadir (Apel Pagi & Malam)</option>
+          <option value="hadir-pagi">🌅 Hadir Apel Pagi Saja</option>
+          <option value="hadir-malam">🌙 Hadir Apel Malam Saja</option>
+          <option value="Izin">📋 Izin</option>
+          <option value="Sakit">🤒 Sakit</option>
+          <option value="Alpha">❌ Alpha</option>
+        </select>
+        <div id="status-info" style="font-size:11px;color:#1e3a5f;background:#e8f4fd;padding:6px 10px;border-radius:6px;margin-top:-6px;margin-bottom:10px"></div>
       </div>
+      <input type="hidden" id="abs-p">
+      <input type="hidden" id="abs-m">
       <label>Keterangan</label>
       <input type="text" id="abs-ket" placeholder="Opsional">
       <button class="btn b-blue" onclick="doSimpanAbsensi()">💾 Simpan Absensi</button>
@@ -208,6 +214,9 @@ window.onload=function(){
   document.getElementById('tgl-hari').textContent=t.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('r-bln').value=t.getMonth()+1;
   document.getElementById('l-bln').value=t.getMonth()+1;
+
+  // Set default status
+  onStatusChange();
 
   db.ref('pegawai').on('value',function(snap){
     _pgwData=snap.val()||{};
@@ -345,7 +354,29 @@ function doSimpanAbsensi(){
   }).catch(function(e){showNotif('abs-notif','❌ Gagal: '+e.message,true);});
 }
 
-function getRekap(bln,thn){
+function onStatusChange(){
+  var v=document.getElementById('abs-status').value;
+  var info=document.getElementById('status-info');
+  if(v==='hadir'){
+    document.getElementById('abs-p').value='Hadir';
+    document.getElementById('abs-m').value='Hadir';
+    info.textContent='Apel Pagi: Hadir | Apel Malam: Hadir';
+  } else if(v==='hadir-pagi'){
+    document.getElementById('abs-p').value='Hadir';
+    document.getElementById('abs-m').value='Alpha';
+    info.textContent='Apel Pagi: Hadir | Apel Malam: Alpha';
+  } else if(v==='hadir-malam'){
+    document.getElementById('abs-p').value='Alpha';
+    document.getElementById('abs-m').value='Hadir';
+    info.textContent='Apel Pagi: Alpha | Apel Malam: Hadir';
+  } else {
+    document.getElementById('abs-p').value=v;
+    document.getElementById('abs-m').value=v;
+    info.textContent='Apel Pagi: '+v+' | Apel Malam: '+v;
+  }
+}
+
+(bln,thn){
   var al=Object.values(_absData).filter(function(a){var d=new Date(a.tgl);return d.getMonth()+1===bln&&d.getFullYear()===thn;});
   return Object.entries(_pgwData).map(function(e,i){
     var pid=e[0],p=e[1],pd=al.filter(function(a){return a.pid===pid;});

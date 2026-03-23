@@ -284,7 +284,9 @@ function renderAbs(){
   if(!data.length){w.innerHTML='<p class="info">Belum ada absensi untuk tanggal ini.</p>';return;}
   var h='<div style="overflow-x:auto"><table><thead><tr><th>Nama</th><th>Apel Pagi</th><th>Apel Malam</th><th>Keterangan</th></tr></thead><tbody>';
   data.forEach(function(a){
-    h+='<tr><td>'+a.nama+'</td><td>'+bdg(a.p)+'</td><td>'+bdg(a.m)+'</td><td>'+(a.ket||'-')+'</td></tr>';
+    // Ambil nama terbaru dari data pegawai, fallback ke nama lama jika tidak ditemukan
+    var namaDisplay=(_pgwData[a.pid]&&_pgwData[a.pid].nama)?_pgwData[a.pid].nama:a.nama;
+    h+='<tr><td>'+namaDisplay+'</td><td>'+bdg(a.p)+'</td><td>'+bdg(a.m)+'</td><td>'+(a.ket||'-')+'</td></tr>';
   });
   w.innerHTML=h+'</tbody></table></div>';
 }
